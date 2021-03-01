@@ -1,34 +1,7 @@
-const $ = require("jquery");
+const Editor = require('./editor');
 
-function getPagesList(){
-    $("h1").remove();
-    $.get("./api", (data) => {
-        data.forEach((file) => {
-            $("body").append('<h1>' + file + '</h1>')
-        });
-        }, "JSON");
+window.editor = new Editor;
+
+window.onload = () => {
+    window.editor.open('index.html')
 }
-
-getPagesList();
-
-$("#send").click(() => {
-    $.post("./api/createNewHtml.php", {
-        "name": $("input").val()
-    }, (data) => {
-        getPagesList();
-    })
-    .fail(() => {
-       alert("Такая страница уже существует");
-    });
-});
-
-$("#delete").click(() => {
-    $.post("./api/deleteOldHtml.php", {
-        "name": $("input").val()
-    }, (data) => {
-        getPagesList();
-    })
-    .fail(() => {
-        alert("Такой страницы нет");
-    });
-});
