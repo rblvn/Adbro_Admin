@@ -23,8 +23,9 @@ module.exports = class Editor {
                 return dom;
             })
             .then(DOMHelper.serialazeDomToStr)
-            .then((html) => axios.post('./api/saveTemporaryPage.php', { html }))
-            .then(() => this.iframe.load('../temp.html'))
+            .then((html) => axios.post('./api/saveTemporaryPage.php', { html })) // создаем временную копию страницы
+            .then(() => this.iframe.load('../9qewoofhw_rewh.html'))
+            .then((html) => axios.post('./api/deleteTempHtml.php')) // удаляем време
             .then(() => this.enableEditing())
             .then(() => this.injectStyles())
             .then(cb)
