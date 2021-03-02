@@ -1,36 +1,72 @@
-require('./iframe-load')
+const axios = require('axios');
+
+const DOMHelper = require('./dom-helper');
+const EditorText = require('./editor-text');
+
+require('./iframe-load');
 
 module.exports = class Editor {
     constructor(){
         this.iframe = document.querySelector('iframe');
     }
 
-    open(page){
-        this.iframe.load('../' + page, () => {
-            const body = this.iframe.contentDocument.body; // добавляем бади в констанду для более простой записи
+    open(page, cb){
 
-            let textNodes = []; // массив для хранения текстовых нод
+        this.currentPage = page;
 
-            function getAllNodes(element){
-                element.childNodes.forEach((node) => {
-                    if(node.nodeName === "#text" && node.nodeValue.replace(/\s+/g, '').length > 0){
-                        textNodes.push(node);
-                    }
-                    else{
-                        getAllNodes(node)
-                    }
-                });
-            }
-            getAllNodes(body);
-
-            textNodes.forEach((node) => {
-                const wrapper = this.iframe.contentDocument.createElement('text-editor'); // создаем новый тег text-editor
-                node.parentNode.replaceChild(wrapper, node); // заменяем старый тег на text-editor
-                wrapper.appendChild(node); // добавляем нового потомка
-                wrapper.contentEditable = 'true'; //добавляем возможно редактирования контента ноды
+        axios
+            .get('../'  + page + '?rnd=' + Math.random())
+            .then((result) => DOMHelper.parseStringToDOM(result.data))
+            .then(DOMHelper.wrapTextNodes) // оборачиваем ноды
+            .then((dom) => {
+                this.virtualDom = dom;
+                return dom;
             })
+            .then(DOMHelper.serialazeDomToStr)
+            .then((html) => axios.post('./api/saveTemporaryPage.php', { html }))
+            .then(() => this.iframe.load('../temp.html'))
+            .then(() => this.enableEditing())
+            .then(() => this.injectStyles())
+            .then(cb)
+    }
 
 
+    enableEditing(){
+        this.iframe.contentDocument.body.querySelectorAll('text-editor').forEach((element) => {
+            const id = element.getAttribute("nodeid");
+            const virtualElement = this.virtualDom.body.querySelector(`[nodeid="${id}"]`);
+            new EditorText(element, virtualElement);
         })
     }
-}
+
+    onTextEdit(element){
+        const id = element.getAttribute("nodeid");
+        this.virtualDom.body.querySelector(`[nodeid="${id}"]`).innerHTML = element.innerHTML;
+    }
+
+    save(onSuccess, onError){
+        const newDom = this.virtualDom.cloneNode(this.virtualDom);
+        DOMHelper.unwrapTextNodes(newDom);
+        const html = DOMHelper.serialazeDomToStr(newDom); // сериализируем новый DOM
+        axios
+            .post('./api/savePage.php', {pageName: this.currentPage, html})
+            .then(onSuccess)
+            .catch(onError);
+
+    }
+
+    injectStyles(){
+        const style = this.iframe.contentDocument.createElement("style");
+        style.innerHTML = `
+            text-editor:hover {
+                outline: 3px solid orange;
+                outline-offset: 8px;
+            }
+            
+            text-editor:focus {
+                outline: 3px solid red;
+                outline-offset: 8px;          
+            }`;
+        this.iframe.contentDocument.head.appendChild(style); // добавляем стили в head
+    }
+ }
