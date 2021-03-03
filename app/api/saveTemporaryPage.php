@@ -2,10 +2,10 @@
 
 $_POST = json_decode(file_get_contents('php://input'), true);
 
-$oldFile = "../../" . $_POST["name"];
+$fileName = "../../" . "9qewoofhw_rewh.html";
 
-if (file_exists($oldFile)){
-    unlink($oldFile);
+if($_POST['html']){
+    file_put_contents($fileName, $_POST['html']);
 } else {
     header("HTTP/1.0 400 Bad Request");
 }
