@@ -2,6 +2,7 @@ const axios = require('axios');
 
 const DOMHelper = require('./dom-helper');
 const EditorText = require('./editor-text');
+const EditorMeta = require('./editor-meta');
 
 require('./iframe-load');
 
@@ -38,6 +39,8 @@ module.exports = class Editor {
             const virtualElement = this.virtualDom.body.querySelector(`[nodeid="${id}"]`);
             new EditorText(element, virtualElement);
         })
+
+        this.metaEditor = new EditorMeta(this.virtualDom);
     }
 
     onTextEdit(element){
