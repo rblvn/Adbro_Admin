@@ -7,7 +7,8 @@ const axios = require('axios');
 const UIkit = require('uikit')
 window.editor = new Editor;
 
-new Vue({
+// windows.vue нужно для глобализации методов пользовательского интерфейса
+window.vue = new Vue({
     el: '#app',
     data: {
         showLoader:true,
@@ -16,7 +17,10 @@ new Vue({
         backupList: [],
         meta: {
             title: "", description: "", keywords: ""
-        }
+        },
+        auth: false,
+        password: "",
+        loginError: false
     },
     methods:{
         onBtnSave(){
@@ -61,25 +65,73 @@ new Vue({
                     return axios.post('./api/restoreBackup.php', { "page": this.page, "file": backup.file })
                 })
                 .then(() => {
-                    window.editor.open(this.page, () => {
-                        this.showLoader = false;
-                    })
+                    this.openPage(this.page);
                 })
 
         },
 
         applyMeta(){
             this.meta = window.editor.metaEditor.setMeta(this.meta.title, this.meta.description, this.meta.keywords);
-        }
+        },
+
+        enableLoader(){
+            this.showLoader = true;
+        },
+
+        disableLoader(){
+            this.showLoader = false;
+        },
+
+        errorNotification(message){
+            UIkit.notification({message: message, status: 'danger'});
+        },
+
+        login(){
+            if (this.password.length > 5){
+                axios
+                    .post('./api/login.php', {"password": this.password})
+                    .then((res) => {
+                        if (res.data.auth === true){
+                            this.auth = true;
+                            this.start();
+                        }
+                        else{
+                            this.loginError = true;
+                        }
+                    })
+            } else {
+                this.loginError = true;
+            }
+        },
+
+        logout(){
+            axios
+                .get("./api/logout.php")
+                .then(() => {
+                   window.location.replace("/");
+                });
+        },
+
+        start(){
+            this.openPage(this.page);
+            axios
+                .get('./api/pageList.php')
+                .then((res) => {
+                    this.pageList = res.data;
+                });
+            this.loadBackupList();
+        },
 
     },
     created() {
-        this.openPage(this.page);
         axios
-            .get('./api/pageList.php')
+            .get("./api/checkAuth.php")
             .then((res) => {
-                this.pageList = res.data;
+                console.log(res.data);
+                if (res.data.auth === true){
+                    this.auth = true;
+                    this.start();
+                }
             });
-        this.loadBackupList();
-    }
+    },
 })
