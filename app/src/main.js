@@ -7,7 +7,8 @@ const axios = require('axios');
 const UIkit = require('uikit')
 window.editor = new Editor;
 
-new Vue({
+// windows.vue нужно для глобализации методов пользовательского интерфейса
+window.vue = new Vue({
     el: '#app',
     data: {
         showLoader:true,
@@ -70,6 +71,18 @@ new Vue({
 
         applyMeta(){
             this.meta = window.editor.metaEditor.setMeta(this.meta.title, this.meta.description, this.meta.keywords);
+        },
+
+        enableLoader(){
+            this.showLoader = true;
+        },
+
+        disableLoader(){
+            this.showLoader = false;
+        },
+
+        errorNorification(message){
+            UIkit.notification({message: message, status: 'danger'});
         }
 
     },
