@@ -17,7 +17,10 @@ window.vue = new Vue({
         backupList: [],
         meta: {
             title: "", description: "", keywords: ""
-        }
+        },
+        auth: false,
+        password: "",
+        loginError: false
     },
     methods:{
         onBtnSave(){
@@ -62,9 +65,7 @@ window.vue = new Vue({
                     return axios.post('./api/restoreBackup.php', { "page": this.page, "file": backup.file })
                 })
                 .then(() => {
-                    window.editor.open(this.page, () => {
-                        this.showLoader = false;
-                    })
+                    this.openPage(this.page);
                 })
 
         },
@@ -81,18 +82,56 @@ window.vue = new Vue({
             this.showLoader = false;
         },
 
-        errorNorification(message){
+        errorNotification(message){
             UIkit.notification({message: message, status: 'danger'});
-        }
+        },
+
+        login(){
+            if (this.password.length > 5){
+                axios
+                    .post('./api/login.php', {"password": this.password})
+                    .then((res) => {
+                        if (res.data.auth === true){
+                            this.auth = true;
+                            this.start();
+                        }
+                        else{
+                            this.loginError = true;
+                        }
+                    })
+            } else {
+                this.loginError = true;
+            }
+        },
+
+        logout(){
+            axios
+                .get("./api/logout.php")
+                .then(() => {
+                   window.location.replace("/");
+                });
+        },
+
+        start(){
+            this.openPage(this.page);
+            axios
+                .get('./api/pageList.php')
+                .then((res) => {
+                    this.pageList = res.data;
+                });
+            this.loadBackupList();
+        },
 
     },
     created() {
-        this.openPage(this.page);
         axios
-            .get('./api/pageList.php')
+            .get("./api/checkAuth.php")
             .then((res) => {
-                this.pageList = res.data;
+                console.log(res.data);
+                if (res.data.auth === true){
+                    this.auth = true;
+                    this.start();
+                }
             });
-        this.loadBackupList();
-    }
+    },
 })

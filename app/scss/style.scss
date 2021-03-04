@@ -27,6 +27,10 @@ iframe{
     display: flex;
   }
 
+  .logout-button{
+    margin-left: 10px;
+  }
+
   .head-dropdown{
     margin-top: -10px;
     width: 300px;
@@ -59,4 +63,35 @@ iframe{
     color: white;
     fill: white;
   }
+}
+
+.login-container{
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  left: 0; top: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(black, .5);
+
+  .login {
+    display: flex;
+    flex-direction: column;
+    width: 600px;
+    padding: 30px;
+    border-radius: 4px;
+    background-color: #ffffff;
+
+    button{
+      margin: 15px 0 0 0;
+      align-self: flex-end;
+    }
+
+    .login-error{
+      color: red;
+    }
+  }
+
+
 }
